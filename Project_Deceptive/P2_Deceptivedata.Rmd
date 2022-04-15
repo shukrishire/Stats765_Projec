@@ -1,0 +1,115 @@
+---
+title: "P2_Deceptive"
+output: html_document
+date: '2022-04-14'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+1. Goal: The aim of the goal is to correctly predict deceptive reviews from the Deceptive Opinion Spam Corpus.  
+
+2. Data source: 
+The Data set is found in Kaggle.com and consisted of reviews for the 20 most popular hotel reviews in Chicago and each hotel has 20 reviews consisting of either truthful or deceptive reviews. The original data provided was already cleaned and well structured, as such each hotel has an equal number of truthful positive, deceptive positive,truthful negative, deceptive negative reviews. 
+
+As a result of the simple dataset we will use the whole dataset and add more variables if needed. 
+
+3. Data processing:
+The main aim of the data set is to wrangle the text data, and identify and similarities or differences between the types of deceptive reviews. 
+--Things we want to look out for in data processing--- 
+1. Text length
+2. frequently used words 
+3. Caps lock words 
+4. tone of language such as words like I, Extreme emotive words, joined experiences 
+
+~~ punctuations  and explanations do they indicate deceptive reviews 
+
+```{r}
+# read in the libraries we're going to use
+library(tidyverse)
+library(dplyr)
+library(stringr)
+library(tidytext)
+library(ggplot2)
+library(tm) 
+library(tibble)
+```
+
+
+
+```{r cars}
+#read in the dataset
+raw_data = read_csv("deceptive-opinion.csv")
+# Have a look at which variables need to changed or restructured 
+names(raw_data)
+as.factor(raw_data$deceptive)
+sum(is.na(raw_data))
+as.factor(raw_data$source)
+#Polarity tells if its a positive or negative review 
+```
+custom_stop_words <- tibble(word = c("hotel", "room"))
+
+
+3.1 Remove stop words 
+```{r}
+text = paste0(raw_data$text, collapse = " ")
+
+#test_text = str_replace_all(test_text, pattern = "\", replacement = " ")
+text = str_replace_all(text, pattern = "\n", replacement = " ")
+
+custom_stop_words <- tibble(word = c("hotel", "room", "chicago"))
+text_wordcount = data_frame(text = text)%>%  
+        unnest_tokens(output = word, input = text) %>% 
+        anti_join(stop_words) %>% 
+        anti_join(custom_stop_words) %>% 
+        count(word, sort = T)
+text_wordcount
+
+```
+
+
+3.3 Remove - Stemming words, white space,
+Find- length of each review row wise 
+```{r}
+library(tm)
+# stemming words 
+text <- stemDocument(raw_data$text)
+# white space
+text = stripWhitespace(text)
+ 
+#find the length of each review row wise 
+temp_rev =  nchar(gsub('[^ ]+', '',text))+1
+# adding this count to the data frame 
+raw_data$review_length = temp_rev
+```
+
+
+
+
+
+
+
+
+Data Processing:
+-Remove 
+- stop words, stemming words, capital letters, and words that 
+- Length of text - number of charachters in each review
+- custome words - words that are common but not gonna be lpfull to the analysis -- eg hotel common but not helpfull 
+
+
+
+
+```{r}
+
+
+
+
+
+```
+
+
+
+
+
