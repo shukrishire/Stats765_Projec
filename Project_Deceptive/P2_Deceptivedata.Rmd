@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-1. Goal: The aim of the goal is to correctly predict deceptive reviews from the Deceptive Opinion Spam Corpus.  
+1. Goal: The aim of the goal is to correctly predict deceptive reviews from the Deceptive Opinion Spam Corpus.  Test. 
 
 2. Data source: 
 The Data set is found in Kaggle.com and consisted of reviews for the 20 most popular hotel reviews in Chicago and each hotel has 20 reviews consisting of either truthful or deceptive reviews. The original data provided was already cleaned and well structured, as such each hotel has an equal number of truthful positive, deceptive positive,truthful negative, deceptive negative reviews. 

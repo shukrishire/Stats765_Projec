@@ -1,0 +1,80 @@
+---
+title: "milestone2"
+author: "Ashwathy Subramanyan - asub986"
+date: "15/04/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Data Processing
+
+```{r}
+dim(reviews)
+names(reviews)
+```
+
+```{r}
+head(reviews)
+```
+
+
+```{r}
+reviews2 <- reviews %>%
+  unite(group, c(deceptive, polarity), remove = F) %>%
+  mutate(review = row_number())
+
+head(reviews2)
+```
+
+```{r}
+library(tidytext)
+
+stopwords <- as.list(get_stopwords()
+                     [-c(1,2,3,4,5,6,7,8,58,63,65,67,69,73,75,79),-2])
+#exclude personal pronouns - interested to see if fake reviews use less or more
+
+stopwords <- as.data.frame(stopwords)
+
+#remove stopwords
+tidyreviews <- reviews2 %>%
+  unnest_tokens(word, text) %>% 
+  anti_join(stopwords)
+  
+
+#negative/positive word count
+bingnegative <- get_sentiments("bing") %>%
+  filter(sentiment == "negative")
+
+bingpositive <- get_sentiments("bing") %>%
+  filter(sentiment == "positive")
+ 
+negwords <- tidyreviews %>%
+  semi_join(bingnegative, by = "word") %>%
+  group_by(review) %>%
+  summarise(negwords = n())
+
+poswords <- tidyreviews %>%
+  semi_join(bingpositive, by = "word") %>%
+  group_by(review) %>%
+  summarise(poswords = n())
+
+tidyreviews <- tidyreviews %>%
+  left_join(negwords, by = "review") %>%
+  left_join(poswords, by = "review")
+
+#include word count
+tidyreviews <- tidyreviews %>%
+  group_by(review) %>%
+  summarize(wordcount = n()) %>%
+  arrange(desc(wordcount)) %>%
+  inner_join(tidyreviews,by = "review")
+
+
+#stopwords <- as.data.frame(stopwords)
+
+```
+
