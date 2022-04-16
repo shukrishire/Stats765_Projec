@@ -87,6 +87,21 @@ raw_data$review_length = temp_rev
 
 
 
+```{r}
+
+if(!require('hunspell')) {
+    install.packages('hunspell')
+    library('hunspell')
+}
+# Stemming
+words <- c("love", "loving", "lovingly", "loved", "lover", "lovely", "love")
+words
+hunspell_stem(words)
+hunspell_analyze(words)
+
+
+
+```
 
 
 

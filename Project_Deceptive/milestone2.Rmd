@@ -1,18 +1,37 @@
 ---
 title: "milestone2"
-author: "Ashwathy Subramanyan - asub986"
+author: 'Ashwathy Subramanyan - asub986 & Shukri Shire -sshi482'
 date: "15/04/2022"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(tidyr)
+library(tidytext)
+library(wordcloud)
+library(reshape2)
+library(ggplot2)
+
 ```
 
-## Data Processing
+$\textbf{1. Goal}$ 
+The main goal of the group project is to analyse the deceptive reviews from the Deceptive Opinion Spam Corpus. 
+
+$\textbf{2. Data Source}$ 
+The main source of data came from Kaggle website using the decepive-opinion dataset.In order to get the dataset I had to make a free Kaggle account and download the data. The dataset provided was in a CSV format and I was able to download it into R. 
+
+The data consisted of reviews for the 20 most popular hotel reviews in Chicago and each hotel has 20 reviews consisting of either truthful or deceptive reviews. The original data provided was already well structured, as such each hotel has an equal number of truthful positive, deceptive positive,truthful negative, deceptive negative reviews. The whole dataset is used for analysis. 
+
+$\textbf{3. Data Processing}$
+The main aim of the data set is to wrangle the text data, and identify and similarities or differences between the types of deceptive reviews. 
 
 ```{r}
+reviews = read_csv("deceptive-opinion.csv")
 dim(reviews)
 names(reviews)
 ```
@@ -21,7 +40,7 @@ names(reviews)
 head(reviews)
 ```
 
-
+A backup copy called Reviews2copy for data management purposes. The new dataset combined the columns deceptive and polarity to form a new column called group. The group column would allow us to see the different combinations of deceptive and polarity, and we can use this as another layer of data classification. We chose to combine these columns because they are the best descriptors of a review's deceptive. 
 ```{r}
 reviews2 <- reviews %>%
   unite(group, c(deceptive, polarity), remove = F) %>%
@@ -30,8 +49,37 @@ reviews2 <- reviews %>%
 head(reviews2)
 ```
 
+Finally we used the tidy text, tidyverse packages in R to restructure, remove, and organised the data to show deceptive reviews. 
+
+
+$\textbf{4. Data Exploration}$
+We decided to focus on three main elements to help find deceptive reviews;
+1. difference between neg and positive words
+2. common words (e.g., word cloud) are deceptive and truthful reviews
+3. total word count patterns between deceptive and positive.
+
+We decided not to focus on source and hotel name unless further analysis requires identifying these columns. Additionally, the number of hotels and sources are divided between hotels, and for this reason, we decided to focus on the columns - deceptive, group, reviews, and polarity. 
+
+We decided to add new columns called polarity-score, reviews, positive words, and negative words to help measure/identify if a review is deceptive or not. We used the sentiment function in Tidytext to identify if words are positive or negative and score them using a polarity score. 
+
+
+As shown below, we have decided to use word clouds to see the most commonly used words and identify if there is any relationship between these words and positive, negative sentiment words. The word cloud function was ideal for providing a visual inspection of the commonly used words such as "I," "My," "Great," and "Comfortable". Also we found common words for positive and negative sentiments, for further analysis we could see how the frequency of these words are related to deceptive reviews in test and train data.  
+
+Other plots, such as box plots and bar plots, were used to identify relationships between the frequency of words, polarity, and sentiments. These plots show that there is not much difference between deceptive and truthful reviews in terms of word count and polarity score. We would need to find alternative parameters for identifying difference between deceptive and truthful reviews. 
+--see next few pages for description of Data Exploration and analytical plan---
+
+
+$\textbf{5. Analytical Plan}$ 
+
+The next step is to identify which analytical methods are suitable for this data set. We already have a polarity score which means we can use this to provide more information about deceptive or non-deceptive reviews. 
+
+We identified that the word "I" , "my","we", "partner", and other sentimental are different between groups, so that we would look into this further for the next milestone. 
+
+A potential method we could employ includes LASSO, LDA, or Tree regression which are all classification methods. We have four groups of deceptive types, and we could use these methods to help bets classify reviews into different deceptive reviews. 
+
+$\textbf{Background:6:Appendix}$
+
 ```{r}
-library(tidytext)
 
 stopwords <- as.list(get_stopwords()
                      [-c(1,2,3,4,5,6,7,8,58,63,65,67,69,73,75,79),-2])
@@ -40,10 +88,11 @@ stopwords <- as.list(get_stopwords()
 stopwords <- as.data.frame(stopwords)
 
 #remove stopwords
+custom_stop_words <- tibble(word = c("hotel", "room", "chicago","chicago's"))
 tidyreviews <- reviews2 %>%
   unnest_tokens(word, text) %>% 
-  anti_join(stopwords)
-  
+  anti_join(stopwords)%>% 
+  anti_join(custom_stop_words) 
 
 #negative/positive word count
 bingnegative <- get_sentiments("bing") %>%
@@ -74,7 +123,81 @@ tidyreviews <- tidyreviews %>%
   inner_join(tidyreviews,by = "review")
 
 
-#stopwords <- as.data.frame(stopwords)
+# Remove NA
+names(which(colSums(is.na(tidyreviews))>0))
+
+head(tidyreviews$negwords %>% replace_na(0))
+head(tidyreviews$poswords %>%  replace_na(0))
+
+
+head(tidyreviews)
+
+
+```  
+                         
+    
+$\textbf{4.Data Exploration}$               
+
+```{r}
+bing <- get_sentiments("bing")
+
+tidyreviews <- tidyreviews %>%
+  mutate(polarity_score=  poswords - negwords)
+```
+
+
+word cloud 
+```{r}
+word_count = tidyreviews %>% 
+  inner_join(bing) %>%
+  count(word,polarity,sort = TRUE)
+
+  word_count%>% 
+  filter(n > 50) %>% 
+  mutate(n= ifelse(polarity == "negative",-n,n)) %>% 
+  mutate(word = reorder(word,n)) %>% 
+  ggplot(aes(word,n,fill=polarity))+
+  geom_col()+
+  coord_flip()+
+  labs(y="Polarity")
+  
+#1:difference between neg and positive words
+
+ggplot(tidyreviews,aes(deceptive,polarity_score))+ geom_boxplot()
+
+#3:Total word count patterns between deceptive and positive.
+
+ggplot(tidyreviews, aes(deceptive,wordcount)) +geom_boxplot()
+
+#2: Common words (e.g., word cloud) are deceptive and truthful reviews
+
+#For all reviews 
+tidyreviews %>% 
+  count(word) %>% 
+  with(wordcloud(word,n,max.words = 50, random.order=F, col=rainbow(50),scale=c(8.5,0.75)))
+
+#relationship between word and decptove coloumn 
+tidyreviews %>% 
+  count(word, deceptive,sort = TRUE) %>% 
+  acast(word ~deceptive, value.var = "n", fill = 0) %>% 
+  comparison.cloud(colors = c("#F8766D", "#00BFC4"),
+                   max.words = 100)
+
+# Commonly used negative words 
+tidyreviews %>% 
+  inner_join(bingnegative) %>% 
+  count(word,sort = TRUE) %>% 
+  with(wordcloud(word,n,max.words = 50, colors = "red", scale=c(3,0.5)))
+
+#Commonly used positive words 
+tidyreviews %>% 
+  inner_join(bingpositive) %>% 
+  count(word,sort = TRUE) %>% 
+  with(wordcloud(word,n,max.words = 50,colors = "green", scale=c(3.5,0.25)))
 
 ```
 
+
+                         
+                       
+                       
