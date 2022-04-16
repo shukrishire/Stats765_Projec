@@ -1,6 +1,6 @@
 ---
-title: "milestone2"
-author: 'Ashwathy Subramanyan - asub986 & Shukri Shire -sshi482'
+title: "Stats765: Milestone2"
+author: 'Shukri Shire -sshi482'
 date: "15/04/2022"
 output:
   pdf_document: default
